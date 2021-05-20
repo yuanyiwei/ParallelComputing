@@ -32,17 +32,9 @@ int main(int argc, char **argv)
     total /= n;
     const double endtime = MPI_Wtime();
     MPI_Finalize();
+    // printf("%d\n", rank);
 
     if (rank == 0)
-    {
-        printf("%.12lf\n", total);
-        const char *log_time_file = getenv("LOG_TIME_FILE");
-        if (log_time_file != NULL)
-        {
-            FILE *fp = fopen(log_time_file, "a");
-            fprintf(fp, "%lf\n", endtime - starttime);
-            fclose(fp);
-        }
-    }
+        printf("pi: %.12lf\nCost time: %.12lf s\n", total, endtime - starttime);
     return 0;
 }
