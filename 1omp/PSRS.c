@@ -5,7 +5,7 @@
 #include <math.h>
 
 #define num_threads 3
-#define DBL_MAX 65535
+#define MAXNUM 65535
 
 void swap(int *a, int *b)
 {
@@ -60,7 +60,7 @@ void PSRS(int *seq, int n)
     m = k * p - n;
     copy_seq(seq, copy, n);
     for (i = 0; i < m; i++)
-        copy[n + i] = DBL_MAX;
+        copy[n + i] = MAXNUM;
     step = int(floor((double)k / p));
     omp_set_num_threads(p);
 #pragma omp parallel private(i)
@@ -85,7 +85,7 @@ void PSRS(int *seq, int n)
         printf("%d  ", (int)sample[i]);
     for (i = 1; i < p; i++)
         sample_main[i - 1] = sample[i * p];
-    sample_main[p - 1] = DBL_MAX - 1;
+    sample_main[p - 1] = MAXNUM - 1;
     printf("\n");
     for (i = 0; i < p - 1; i++)
         printf("%d  ", (int)sample_main[i]);
