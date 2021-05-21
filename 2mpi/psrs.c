@@ -25,23 +25,20 @@ void Merge(int *A, int l, int m, int r)
     free(R);
 }
 
-void MergeSort(int *A, int l, int r)
+void mSort(int *A, int l, int r)
 {
     if (l < r)
     {
         int m = (l + r) / 2;
-        MergeSort(A, l, m);
-        MergeSort(A, m + 1, r);
+        mSort(A, l, m);
+        mSort(A, m + 1, r);
         Merge(A, l, m, r);
     }
 }
 
-/**************************************************
-* 对A[0 : n - 1]进行PSRS排序
-***************************************************/
 void PSRS(int *A, int n, int id, int num_processes)
 {
-     //每个进程都会执行这个函数，这里面的变量每个进程都有一份，因此都是局部的（对于当前进程而言）
+    //每个进程都会执行这个函数，这里面的变量每个进程都有一份，因此都是局部的（对于当前进程而言）
     int per;
     int *samples, *global_samples; //global表示这个变量是主进程会使用的，但事实上每个进程都声明了
     int *pivots;
@@ -51,7 +48,6 @@ void PSRS(int *A, int n, int id, int num_processes)
     int newdatassize;
     int *global_sizes;
     int *global_offsets;
-    //-------------------------------------------------------------------------------------------------------------------
 
     per = n / num_processes;                              //A的n个元素划分为num_processes段，每个进程处理per个元素
     samples = (int *)malloc(num_processes * sizeof(int)); //当前进程的采样数组
@@ -63,7 +59,7 @@ void PSRS(int *A, int n, int id, int num_processes)
     MPI_Barrier(MPI_COMM_WORLD); //设置路障，同步所有进程
     //-------------------------------------------------------------------------------------------------------------------
     //（1）均匀划分，当前进程对A中属于自己的部分进行串行归并排序
-    MergeSort(A, id * per, (id + 1) * per - 1); //这里没有把A中对应当前进程的数据复制到当前进程，而是直接对A部分排序
+    mSort(A, id * per, (id + 1) * per - 1); //这里没有把A中对应当前进程的数据复制到当前进程，而是直接对A部分排序
     //（2）正则采样，当前进程选出 num_processes 个样本放在local_sample中
     for (int k = 0; k < num_processes; k++)
         samples[k] = A[id * per + k * per / num_processes];
@@ -72,9 +68,9 @@ void PSRS(int *A, int n, int id, int num_processes)
     //-------------------------------------------------------------------------------------------------------------------
     //（3）采样排序 （4）选择主元
     if (id == 0)
-    {                                                                    //主进程
-        MergeSort(global_samples, 0, num_processes * num_processes - 1); //对采样的num_processes * num_processes个样本进行排序
-        for (int k = 0; k < num_processes - 1; k++)                      //选出num_processes - 1个主元
+    {                                                                //主进程
+        mSort(global_samples, 0, num_processes * num_processes - 1); //对采样的num_processes * num_processes个样本进行排序
+        for (int k = 0; k < num_processes - 1; k++)                  //选出num_processes - 1个主元
             pivots[k] = global_samples[(k + 1) * num_processes];
         pivots[num_processes - 1] = INF; //哨兵
     }
@@ -112,7 +108,7 @@ void PSRS(int *A, int n, int id, int num_processes)
     MPI_Barrier(MPI_COMM_WORLD);
     //-------------------------------------------------------------------------------------------------------------------
     //（7）当前进程归并排序自己的新数据
-    MergeSort(newdatas, 0, newdatassize - 1);
+    mSort(newdatas, 0, newdatassize - 1);
     MPI_Barrier(MPI_COMM_WORLD);
     //（8）主进程收集各个进程的数据，写回A
     //首先收集各进程新数据的大小
@@ -130,7 +126,6 @@ void PSRS(int *A, int n, int id, int num_processes)
     MPI_Gatherv(newdatas, newdatassize, MPI_INT, A, global_sizes, global_offsets, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
     //-------------------------------------------------------------------------------------------------------------------
-    //销毁动态数组
     free(samples);
     samples = NULL;
     free(pivots);
@@ -159,21 +154,21 @@ void PSRS(int *A, int n, int id, int num_processes)
 int main(int argc, char *argv[])
 {
     int A[27] = {15, 46, 48, 93, 39, 6, 72, 91, 14, 36, 69, 40, 89, 61, 97, 12, 21, 54, 53, 97, 84, 58, 32, 27, 33, 72, 20};
-    double t1, t2;
+    double time_start, time_end;
     int id, num_processes;
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &num_processes);
     MPI_Comm_rank(MPI_COMM_WORLD, &id);
     if (id == 0)
-        t1 = MPI_Wtime();
+        time_start = MPI_Wtime();
     PSRS(A, 27, id, num_processes);
     if (id == 0)
     {
-        t2 = MPI_Wtime();
-        printf("time: %lfs\n", t2 - t1);
+        time_end = MPI_Wtime();
+        printf("Final: ");
         for (int i = 0; i < 27; i++)
             printf("%d ", A[i]);
-        printf("\n");
+        printf("\nTime: %lfs\n", time_end - time_start);
     }
     MPI_Finalize();
     return 0;

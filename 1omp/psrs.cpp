@@ -65,30 +65,28 @@ void PSRS(int *seq, int n)
     omp_set_num_threads(p);
 #pragma omp parallel private(i)
     {
-        int id;
-        id = omp_get_thread_num();
+        int id = omp_get_thread_num();
         for (i = 0; i < p; i++)
         {
             quickSort(copy, id * k, id * k + k - 1);
             sample[id * p + i] = copy[id * k + step * i];
         }
-#pragma omp critical
-        {
-            printf("\n%d:", id);
-            for (i = 0; i < k; i++)
-                printf("%d  ", (int)copy[id * k + i]);
-        }
+// #pragma omp critical
+//         {
+//             printf("\n%d:", id);
+//             for (i = 0; i < k; i++)
+//                 printf("%d  ", (int)copy[id * k + i]);
+//         }
     }
     quickSort(sample, 0, p * p - 1);
-    printf("\n");
-    for (i = 0; i < p * p; i++)
-        printf("%d  ", (int)sample[i]);
+    // for (i = 0; i < p * p; i++)
+    //     printf("%d  ", (int)sample[i]);
     for (i = 1; i < p; i++)
         sample_main[i - 1] = sample[i * p];
     sample_main[p - 1] = MAXNUM - 1;
-    printf("\n");
-    for (i = 0; i < p - 1; i++)
-        printf("%d  ", (int)sample_main[i]);
+    // printf("\n");
+    // for (i = 0; i < p - 1; i++)
+    //     printf("%d  ", (int)sample_main[i]);
     omp_set_num_threads(p);
 #pragma omp parallel private(i, j) shared(position)
     {
@@ -112,11 +110,11 @@ void PSRS(int *seq, int n)
             start += len[i];
         for (i = 0, j = 0; i < p; i++)
         {
-            printf("\nthread:%d,j=%d,start=%d,n=%d", omp_get_thread_num(), j, start, position[i][id + 1] - position[i][id]);
+            // printf("\nthread:%d,j=%d,start=%d,n=%d", omp_get_thread_num(), j, start, position[i][id + 1] - position[i][id]);
             copy_seq(copy + i * k + position[i][id], seq + start + j, position[i][id + 1] - position[i][id]);
-            for (t = 0; t < position[i][id + 1] - position[i][id]; t++)
-                printf("  %d  ", (int)copy[i * k + position[i][id] + t]);
-            j = j + position[i][id + 1] - position[i][id];
+            // for (t = 0; t < position[i][id + 1] - position[i][id]; t++)
+                // printf("  %d  ", (int)copy[i * k + position[i][id] + t]);
+            j += position[i][id + 1] - position[i][id];
         }
         //#pragma omp barrier
         //position[p-1][p]=k-m;
@@ -135,7 +133,7 @@ int main()
     end = omp_get_wtime();
 
     time = end - begin;
-    printf("\nFinal: ");
+    printf("Final: ");
     for (int i = 0; i < 27; i++)
         printf("%d ", array[i]);
     printf("\nRunning time: %lfs\n", time);
