@@ -25,7 +25,7 @@ int main()
     std::ifstream in("in.txt");
     if (!in)
     {
-        std::cerr << "Getting input failed\n";
+        std::cerr << "Err: input\n";
         return -2;
     }
     auto a = new double[N * N], b = new double[N * N], res = new double[N * N];
@@ -62,12 +62,12 @@ int main()
     std::ofstream out("out.txt");
     if (!out)
     {
-        std::cerr << "Getting output failed\n";
+        std::cerr << "Err: output\n";
         return -1;
     }
-    for (auto i = 0; i < N; i++)
+    for (int i = 0; i < N; i++)
     {
-        for (auto j = 0; j < N; j++)
+        for (int j = 0; j < N; j++)
             out << std::setprecision(15) << res[i * N + j] << ",";
         out << "\n";
     }
